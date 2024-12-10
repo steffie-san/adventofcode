@@ -1,2 +1,2 @@
-require("Day2")
-ExecuteDay2(true, true)
+require("Day3")
+ExecuteDay3(true, true)
