@@ -13,3 +13,11 @@ function CountEntries(table)
     end
     return count
 end
+
+function ArrayToString(table)
+    local result = ""
+    for _,v in ipairs(table) do
+        result = result .. v .. ","
+    end
+    return result
+end
