@@ -15,12 +15,49 @@
 
                 for (ulong i = low; i <= high; i++)
                 {
-                    var str = i.ToString();
-                    int l = str.Length;
-                    if (l % 2 != 0) continue;
+                    var id = i.ToString();
+                    int l = id.Length;
                     int l2 = l / 2;
-                    string firstHalf = str[0..l2];
-                    string secondHalf = str[l2..];
+                    bool valid = false;
+
+                    Console.WriteLine($"ID: {id}");
+                    for (int stepSize = 1; stepSize <= l2; stepSize++)
+                    {
+                        int steps = l / stepSize;
+                        if (l % stepSize != 0) continue;
+                        var seq = id[0..stepSize];
+
+                        Console.WriteLine($"\tSequence: {seq}");
+
+                        for (int step = 1; step < steps; step++)
+                        {
+                            var start = stepSize * step;
+                            var end = stepSize * (step + 1);
+                            var comparee = id[start..end];
+                            Console.WriteLine($"\t\tComparing \"{seq}\" with \"{comparee}\" (range: {start}-{end})");
+                            if (seq != comparee)
+                            {
+                                Console.WriteLine($"\t\tunequal, not invalid with stepsize {stepSize}");
+                                valid = true;
+                                break;
+                            }
+                            else Console.WriteLine($"\t\tequal, continue...");
+                        }
+                        if (!valid)
+                        {
+                            Console.WriteLine($"\t{id} invalid. Sequence: {seq}");
+                            break;
+                        }
+                    }
+
+                    if (!valid)
+                    {
+                        result2 += i;
+                    }
+
+                    if (l % 2 != 0) continue;
+                    string firstHalf = id[0..l2];
+                    string secondHalf = id[l2..];
                     //Console.WriteLine($"id: {str}, first: {firstHalf}, second: {secondHalf}");
                     if (firstHalf == secondHalf)
                     {
@@ -31,7 +68,7 @@
             }
 
             star1 = result1.ToString();
-            star2 = "Undefined";// result2.ToString();
+            star2 = result2.ToString();
         }
     }
 }

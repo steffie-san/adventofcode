@@ -12,10 +12,11 @@
                 new Day2(),
             };
 
+            bool useExampleInput = true;
             int dayIndex = 1;
-            string result1, result2;
 
-            days[dayIndex].Execute(GetInput(dayIndex + 1), out result1, out result2);
+            string result1, result2;
+            days[dayIndex].Execute(GetInput(dayIndex + 1, useExampleInput), out result1, out result2);
 
             Console.WriteLine($"Day {dayIndex + 1}, star1: {result1}, star2: {result2}");
 
@@ -23,10 +24,11 @@
             Console.ReadKey();
         }
 
-        static string GetInput(int dayIndex)
+        static string GetInput(int dayIndex, bool useExampleInput)
         {
-            string path = "input/day " + dayIndex + ".txt";
-            return File.ReadAllText(path);
+            string path = "input/day " + dayIndex;
+            if (useExampleInput) path += ".example";
+            return File.ReadAllText(path + ".txt");
         }
     }
 }
