@@ -12,7 +12,7 @@
                 new Day2(),
             };
 
-            int dayIndex = 0;
+            int dayIndex = 1;
             string result1, result2;
 
             days[dayIndex].Execute(GetInput(dayIndex + 1), out result1, out result2);
