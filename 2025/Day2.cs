@@ -18,34 +18,36 @@
                     var id = i.ToString();
                     int l = id.Length;
                     int l2 = l / 2;
-                    bool valid = false;
+                    bool valid = true;
 
-                    Console.WriteLine($"ID: {id}");
+                    //Console.WriteLine($"ID: {id}");
                     for (int stepSize = 1; stepSize <= l2; stepSize++)
                     {
                         int steps = l / stepSize;
                         if (l % stepSize != 0) continue;
                         var seq = id[0..stepSize];
 
-                        Console.WriteLine($"\tSequence: {seq}");
+                        //Console.WriteLine($"\tSequence: {seq}");
 
+                        bool invalid = true;
                         for (int step = 1; step < steps; step++)
                         {
                             var start = stepSize * step;
                             var end = stepSize * (step + 1);
                             var comparee = id[start..end];
-                            Console.WriteLine($"\t\tComparing \"{seq}\" with \"{comparee}\" (range: {start}-{end})");
+                            //Console.WriteLine($"\t\tComparing \"{seq}\" with \"{comparee}\" (range: {start}-{end})");
                             if (seq != comparee)
                             {
-                                Console.WriteLine($"\t\tunequal, not invalid with stepsize {stepSize}");
-                                valid = true;
+                                //Console.WriteLine($"\t\tunequal, not invalid with stepsize {stepSize}");
+                                invalid = false;
                                 break;
                             }
-                            else Console.WriteLine($"\t\tequal, continue...");
+                            //else Console.WriteLine($"\t\tequal, continue...");
                         }
-                        if (!valid)
+                        if (invalid)
                         {
-                            Console.WriteLine($"\t{id} invalid. Sequence: {seq}");
+                            valid = false;
+                            //Console.WriteLine($"\t{id} invalid. Sequence: {seq}");
                             break;
                         }
                     }
