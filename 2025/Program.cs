@@ -10,11 +10,12 @@
             {
                 new Day1(),
                 new Day2(),
-                new Day3()
+                new Day3(),
+                new Day4(),
             };
 
             bool useExampleInput = false;
-            int dayIndex = 2;
+            int dayIndex = 3;
 
             string result1, result2;
             days[dayIndex].Execute(GetInput(dayIndex + 1, useExampleInput), out result1, out result2);
