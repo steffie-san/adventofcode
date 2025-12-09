@@ -22,6 +22,11 @@
             {
                 return new Range(Math.Min(Min, other.Min), Math.Max(Max, other.Max));
             }
+
+            public override string ToString()
+            {
+                return $"{Min}-{Max}";
+            }
         }
 
         public void Execute(string input, out string star1, out string star2)
@@ -60,58 +65,80 @@
 
             star1 = result1.ToString();
 
-            LinkedList<Range> mergedRanges = new();
-
-            mergedRanges.AddLast(ranges[0]);
+            List<Range> mergedRanges = new();
 
             for (int i = 0; i < ranges.Count; i++)
             {
                 Range newRange = ranges[i];
+                //Console.WriteLine($"Processing {newRange}");
                 bool added = false;
-                for (LinkedListNode<Range>? rangeIt = mergedRanges.First; rangeIt != null; rangeIt = rangeIt.Next)
+                for (int ii = 0; ii < mergedRanges.Count; ii++)
                 {
-                    Range nextRange = rangeIt.Value;
+                    Range nextRange = mergedRanges[ii];
 
 
-                    if (newRange.Max < nextRange.Min) mergedRanges.AddBefore(rangeIt, newRange);
-                    else if (newRange.Min > nextRange.Max) continue;
+                    if (newRange.Max < nextRange.Min)
+                    {
+                        //Console.WriteLine($"Added {newRange} before {nextRange}");
+                        mergedRanges.Insert(ii, newRange);
+                        added = true;
+                        break;
+                    }
+                    else if (newRange.Min > nextRange.Max)
+                    {
+                        //Console.WriteLine($"{newRange} starts after {nextRange}, go on..");
+                        continue;
+                    }
                     else
                     {
                         //Since the old one completely contains the new one, nothing happens
                         if (nextRange.CompletelyContains(newRange))
                         {
+                            //Console.WriteLine($"{newRange} Completely contained in {nextRange}");
                             added = true;
                             break;
                         }
                         //If the new one completely contains the old one, we should remove the old one and see if the new one overlaps with the next
-                        else if (newRange.CompletelyContains(nextRange)) mergedRanges.Remove(rangeIt);
+                        else if (newRange.CompletelyContains(nextRange))
+                        {
+                            //Console.WriteLine($"{newRange} Completely contains {nextRange}, remove and retry adding {newRange}");
+                            mergedRanges.RemoveAt(ii);
+                            ii--;
+                        }
                         else
                         {
                             Range merged = newRange.Merge(nextRange);
                             //We have partial overlap. If we grow above existing max, remove, merge, and process as a new one
                             if (newRange.Max > nextRange.Max)
                             {
-                                mergedRanges.Remove(rangeIt);
+                                //Console.WriteLine($"combined {newRange} and {nextRange} into {merged}, and max is greater, so watch out for hitting above our weight");
                                 newRange = merged;
+                                mergedRanges.RemoveAt(ii);
+                                ii--;
                             }
                             else
                             {
+                                //Console.WriteLine($"combined {newRange} and {nextRange} into {merged}");
                                 //Just merge easily
-                                rangeIt.Value = merged;
+                                mergedRanges[ii] = merged;
                                 added = true;
                                 break;
                             }
                         }
                     }
                 }
-                if (!added) mergedRanges.AddLast(newRange);
+                if (!added)
+                {
+                    mergedRanges.Add(newRange);
+                    //Console.WriteLine($"Added {newRange} at the end");
+                }
             }
 
             long count = 0;
             foreach (var item in mergedRanges)
             {
-                Console.WriteLine($"{item.Min}-{item.Max}");
-                count += (item.Max - item.Min) + 1;
+                //Console.WriteLine($"{item.Min}-{item.Max}");
+                count += item.Max - item.Min + 1;
             }
 
 
