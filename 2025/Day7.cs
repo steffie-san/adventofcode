@@ -6,9 +6,10 @@ namespace adventofcode_2025
     {
         public void Execute(string input, out string star1, out string star2)
         {
+            int splitCounter = 0;
             string[] rawRows = input.Split(Environment.NewLine);
             StringBuilder[] rows = new StringBuilder[rawRows.Length];
-            for (int i = 0; i < rows.Length; i++)
+            for (int i = 0; i < rows.Length - 1; i++)
             {
                 rows[i] = new StringBuilder(rawRows[i]);
                 int l = rows[i].Length;
@@ -26,12 +27,13 @@ namespace adventofcode_2025
                         {
                             nextRow[ii - 1] = '|';
                             nextRow[ii + 1] = '|';
+                            splitCounter++;
                         }
                     }
                 }
             }
 
-            star1 = "invalid";
+            star1 = splitCounter.ToString();
             star2 = "invalid";
         }
     }
