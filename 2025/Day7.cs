@@ -9,9 +9,11 @@ namespace adventofcode_2025
             int splitCounter = 0;
             string[] rawRows = input.Split(Environment.NewLine);
             StringBuilder[] rows = new StringBuilder[rawRows.Length];
+            rows[0] = new StringBuilder(rawRows[0]);
             for (int i = 0; i < rows.Length - 1; i++)
             {
-                rows[i] = new StringBuilder(rawRows[i]);
+                rows[i + 1] = new StringBuilder(rawRows[i]);
+
                 int l = rows[i].Length;
                 for (int ii = 0; ii < l; ii++)
                 {
