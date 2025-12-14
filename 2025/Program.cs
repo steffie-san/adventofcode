@@ -19,7 +19,7 @@
                 new Day9(),
             };
 
-            bool useExampleInput = false;
+            bool useExampleInput = true;
             int dayIndex = 8;
 
             string result1, result2;
