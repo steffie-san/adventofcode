@@ -35,7 +35,7 @@
         {
             string path = "input/day " + dayIndex;
             if (useExampleInput) path += ".example";
-            return File.ReadAllText(path + ".txt");
+            return File.ReadAllText(path + ".input");
         }
     }
 }
