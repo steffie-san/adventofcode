@@ -9,75 +9,66 @@ namespace adventofcode_2025
             public Vector2 First { get; }
             public Vector2 Second { get; }
 
-            public bool IsVertical { get; }
-            public bool IsHorizontal { get; }
+            public bool IsVertical => First.x == Second.x && First.y != Second.y;
 
-            public long XMax { get; }
-            public long XMin { get; }
-            public long YMax { get; }
-            public long YMin { get; }
+            public long XMax => Math.Max(First.x, Second.x);
+            public long XMin => Math.Min(First.x, Second.x);
+            public long YMax => Math.Max(First.y, Second.y);
+            public long YMin => Math.Min(First.y, Second.y);
 
             public Edge(Vector2 first, Vector2 second)
             {
                 this.First = first;
                 this.Second = second;
-
-                IsVertical = First.x == Second.x;
-                IsHorizontal = First.y == Second.y;
-
-                XMin = Math.Min(First.x, Second.x);
-                XMax = Math.Max(First.x, Second.x);
-                YMin = Math.Min(First.y, Second.y);
-                YMax = Math.Max(First.y, Second.y);
             }
 
-            public Vector2? GetIntersectionPoint(Edge edge)
-            {
-                long x, y;
-                Vector2? result = null;
-                if (IsVertical != edge.IsVertical)
-                {
-                    if (IsVertical)
-                    {
-                        y = edge.First.y;
-                        x = First.x;
-                    }
-                    else
-                    {
-                        y = First.y;
-                        x = edge.First.x;
-                    }
-                    result = new(x, y);
-                }
-                else
-                {
-                    //If they overlap, the "intersection" is the point closest to this.First
-                    if (IsVertical)
-                    {
-                        if (First.x == edge.First.x)
-                        {
-                            x = First.x;
-                            if (edge.YMin < YMin) y = YMin;
-                            else y = edge.YMin;
-                            result = new(x, y);
-                        }
-                    }
-                    else
-                    {
-                        if (First.y == edge.First.y)
-                        {
-                            y = First.y;
-                            if (edge.XMin < XMin) x = XMin;
-                            else x = edge.XMin;
-                            result = new(x, y);
-                        }
-                    }
-                }
-                if (result != null && Intersects(result.Value) && edge.Intersects(result.Value)) return result;
-                return null;
-            }
+            //public Vector2? GetIntersectionPoint(Edge edge)
+            //{
+            //    long x, y;
+            //    Vector2? result = null;
+            //    if (IsVertical != edge.IsVertical)
+            //    {
+            //        if (IsVertical)
+            //        {
+            //            y = edge.First.y;
+            //            x = First.x;
+            //        }
+            //        else
+            //        {
+            //            y = First.y;
+            //            x = edge.First.x;
+            //        }
+            //        result = new(x, y);
+            //    }
+            //    else
+            //    {
+            //        //If they overlap, the "intersection" is the point closest to this.First
+            //        if (IsVertical)
+            //        {
+            //            if (First.x == edge.First.x)
+            //            {
+            //                x = First.x;
+            //                if (edge.YMin < YMin) y = YMin;
+            //                else y = edge.YMin;
+            //                result = new(x, y);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            if (First.y == edge.First.y)
+            //            {
+            //                y = First.y;
+            //                if (edge.XMin < XMin) x = XMin;
+            //                else x = edge.XMin;
+            //                result = new(x, y);
+            //            }
+            //        }
+            //    }
+            //    if (result != null && IsOnEdge(result.Value) && edge.IsOnEdge(result.Value)) return result;
+            //    return null;
+            //}
 
-            public bool Intersects(Vector2 point)
+            public bool IsOnEdge(Vector2 point)
             {
                 if (point == First || point == Second) return true;
                 return
@@ -85,28 +76,31 @@ namespace adventofcode_2025
                     (point.y == First.y && point.x >= XMin && point.x <= XMax);
             }
 
-            public bool Intersects(Edge other)
+            public bool Intersects(Edge other) => GetIntersectionPoint(other) != Vector2.Invalid;
+
+            public Vector2 GetIntersectionPoint(Edge other)
             {
-                return GetIntersectionPoint(other) != null;
+                //In this case, all edges are either horizontal or vertical
+                bool isVertical = IsVertical;
+                if (isVertical != other.IsVertical)
+                {
+                    Edge horizontalEdge = isVertical ? other : this;
+                    Edge verticalEdge = isVertical ? this : other;
 
-                ////In this case, all edges are either horizontal or vertical
+                    long xMin = horizontalEdge.XMin;
+                    long xMax = horizontalEdge.XMax;
 
-                //if (IsHorizontal != other.IsHorizontal)
-                //{
-                //    if (IsHorizontal)
-                //    {
-                //        long y = First.y;
-                //        long x = other.First.x;
-                //        return y >= other.YMin && y <= other.YMax && x >= XMin && x <= XMax;
-                //    }
-                //    else
-                //    {
-                //        long x = First.x;
-                //        long y = other.First.y;
-                //        return x >= other.XMin && x <= other.XMax && y >= YMin && y <= YMax;
-                //    }
-                //}
-                //else return false;
+                    long yMin = verticalEdge.YMin;
+                    long yMax = verticalEdge.YMax;
+
+                    long x = verticalEdge.First.x;
+                    long y = horizontalEdge.First.y;
+
+                    bool intersects = x > xMin && x < xMax && y > yMin && y < yMax;
+
+                    if (intersects) return new Vector2(x, y);
+                }
+                return Vector2.Invalid;
             }
 
             public override string ToString()
@@ -117,6 +111,8 @@ namespace adventofcode_2025
 
         struct Vector2
         {
+            public static readonly Vector2 Invalid = new Vector2(-1, -1);
+
             public long x;
             public long y;
 
@@ -202,16 +198,16 @@ namespace adventofcode_2025
 
             biggestArea = 0;
 
-            StringBuilder worldPrinter = new(totalHeight * totalWidth);
-            for (int y = 0; y < totalHeight; y++)
-            {
-                for (int x = 0; x < totalWidth; x++)
-                {
-                    worldPrinter.Append(TileInPolygon(edges, new Vector2(x, y)) ? '#' : '.');
-                }
-                worldPrinter.AppendLine();
-            }
-            Console.WriteLine(worldPrinter.ToString());
+            //StringBuilder worldPrinter = new(totalHeight * totalWidth);
+            //for (int y = 0; y < totalHeight; y++)
+            //{
+            //    for (int x = 0; x < totalWidth; x++)
+            //    {
+            //        worldPrinter.Append(TileInPolygon(edges, new Vector2(x, y)) ? '#' : '.');
+            //    }
+            //    worldPrinter.AppendLine();
+            //}
+            //Console.WriteLine(worldPrinter.ToString());
 
             for (int i = 0; i < l - 1; i++)
             {
@@ -249,15 +245,26 @@ namespace adventofcode_2025
                         {
                             foreach (Edge item in edges)
                             {
-                                if (rectEdgeIt.Intersects(item))
+                                Vector2 intersectionPoint = rectEdgeIt.GetIntersectionPoint(item);
+
+                                if (intersectionPoint == Vector2.Invalid) continue;
+
+                                var x = intersectionPoint.x;
+                                var y = intersectionPoint.y;
+                                Vector2[] pointsToCheck = new Vector2[2];
+                                if (rectEdgeIt.IsVertical)
                                 {
-                                    if (item.First == rectEdgeIt.First ||
-                                        item.First == rectEdgeIt.Second ||
-                                        item.Second == rectEdgeIt.First ||
-                                        item.Second == rectEdgeIt.Second)
-                                    {
-                                        continue; //Edge case yo
-                                    }
+                                    pointsToCheck[0] = new Vector2(x, y - 1);
+                                    pointsToCheck[1] = new Vector2(x, y + 1);
+                                }
+                                else
+                                {
+                                    pointsToCheck[0] = new Vector2(x - 1, y);
+                                    pointsToCheck[1] = new Vector2(x + 1, y);
+                                }
+
+                                if (!TileInPolygon(edges, pointsToCheck[0]) || !TileInPolygon(edges, pointsToCheck[1]))
+                                {
                                     valid = false;
                                     break;
                                 }
@@ -273,29 +280,33 @@ namespace adventofcode_2025
                         }
                     }
                 }
+                //Console.WriteLine($"{i/(double)(l-1) / 100}%....");
             }
 
             star2 = biggestArea.ToString();
+            //1289423295 is too low
         }
 
         private bool TileInPolygon(Edge[] edges, Vector2 pos)
         {
             foreach (var item in edges)
             {
-                if (item.Intersects(pos)) return true;
+                if (item.IsOnEdge(pos)) return true;
             }
 
             return TileInPolygonWinding(edges, pos);
         }
 
-        private bool IsTileValid(Edge[] edges, Vector2 pos)
+        private bool TileInPolygonRaycast(Edge[] edges, Vector2 pos)
         {
+            //Assuming all edges are in positive y space
+
             Edge testEdge = new Edge(pos, new Vector2(pos.x, -1));
             int intersectCount = 0;
             foreach (Edge item in edges)
             {
                 if (item.First == pos) return true;
-                else if (item.Intersects(pos)) return true;
+                else if (item.IsOnEdge(pos)) return true;
                 else if (testEdge.Intersects(item)) intersectCount++;
             }
             return intersectCount % 2 == 1;
