@@ -248,7 +248,7 @@ MonoBehaviour:
   scale: 0.0001
   updateTime: 0.1
   lineThickness: 0.02
-  markerScale: 0.12
+  markerScale: 0.012
 --- !u!4 &591968200
 Transform:
   m_ObjectHideFlags: 0

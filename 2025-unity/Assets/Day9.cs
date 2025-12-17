@@ -219,7 +219,7 @@ namespace adventofcode_2025
             //1289423295 is too low
         }
 
-        private bool TileInPolygon(Edge[] edges, Vector2 pos)
+        public bool TileInPolygon(Edge[] edges, Vector2 pos)
         {
             return TileInPolygonWinding(edges, pos);
         }
