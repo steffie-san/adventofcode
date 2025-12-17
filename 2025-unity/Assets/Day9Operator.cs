@@ -10,13 +10,15 @@ public class Day9Operator : MonoBehaviour
     public string exampleInputPath;
 
     public LineRenderer edgePrefab;
-    public GameObject vertexPrefab;
+    public SpriteRenderer vertexPrefab;
 
     public float scale = 1f;
     public float updateTime = 0f;
     public float lineThickness = 1f;
+    public float markerScale = 1f;
 
     List<LineRenderer> edges = new List<LineRenderer>();
+    List<SpriteRenderer> badMarkers = new();
 
     LineRenderer[] rectEdges;
 
@@ -50,13 +52,42 @@ public class Day9Operator : MonoBehaviour
             {
                 var c1 = currentEdges[i].First;
                 var c2 = currentEdges[i].Second;
-                rectEdges[i].SetPosition(0, new Vector3(c1.x * scale, c1.y * scale));
-                rectEdges[i].SetPosition(1, new Vector3(c2.x * scale, c2.y * scale));
+                rectEdges[i].SetPosition(0, ToWorldSpace(c1));
+                rectEdges[i].SetPosition(1, ToWorldSpace(c2));
 
             }
+            UpdateBadMarkers(day.invalidPoints);
             yield return new WaitForSeconds(updateTime);
         }
         while (iterator.MoveNext());
+        UpdateBadMarkers(new ());
+    }
+
+    void UpdateBadMarkers(List<(Day9.Vector2, bool)> badPoints)
+    {
+        for (int i = 0; i < badPoints.Count; i++)
+        {
+            SpriteRenderer instance;
+            if (badMarkers.Count <= i)
+            {
+                instance = Instantiate(vertexPrefab);
+                instance.color = Color.red;
+                badMarkers.Add(instance);
+            }
+            else
+            {
+                instance = badMarkers[i];
+                instance.gameObject.SetActive(true);
+            }
+            var point = badPoints[i].Item1;
+            var isIntersection = badPoints[i].Item2;
+            instance.color = isIntersection ? Color.red : Color.cyan;
+            instance.transform.position = ToWorldSpace(point);
+            instance.transform.localScale = Vector3.one * markerScale;
+        }
+
+        for (int i = badPoints.Count; i < badMarkers.Count; i++) badMarkers[i].gameObject.SetActive(false);
+
     }
 
     private void Update()
@@ -91,4 +122,6 @@ public class Day9Operator : MonoBehaviour
         Camera.main.transform.position = center;
         lastScale = scale;
     }
+
+    Vector3 ToWorldSpace(Day9.Vector2 vector) => new Vector3(vector.x, vector.y) * scale;
 }

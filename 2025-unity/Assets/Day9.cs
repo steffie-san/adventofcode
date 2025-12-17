@@ -13,10 +13,10 @@ namespace adventofcode_2025
 
             public bool IsVertical => First.x == Second.x && First.y != Second.y;
 
-            public long XMax => Math.Max(First.x, Second.x);
-            public long XMin => Math.Min(First.x, Second.x);
-            public long YMax => Math.Max(First.y, Second.y);
-            public long YMin => Math.Min(First.y, Second.y);
+            public int XMax => Math.Max(First.x, Second.x);
+            public int XMin => Math.Min(First.x, Second.x);
+            public int YMax => Math.Max(First.y, Second.y);
+            public int YMin => Math.Min(First.y, Second.y);
 
             public Edge(Vector2 first, Vector2 second)
             {
@@ -43,14 +43,14 @@ namespace adventofcode_2025
                     Edge horizontalEdge = isVertical ? other : this;
                     Edge verticalEdge = isVertical ? this : other;
 
-                    long xMin = horizontalEdge.XMin;
-                    long xMax = horizontalEdge.XMax;
+                    int xMin = horizontalEdge.XMin;
+                    int xMax = horizontalEdge.XMax;
 
-                    long yMin = verticalEdge.YMin;
-                    long yMax = verticalEdge.YMax;
+                    int yMin = verticalEdge.YMin;
+                    int yMax = verticalEdge.YMax;
 
-                    long x = verticalEdge.First.x;
-                    long y = horizontalEdge.First.y;
+                    int x = verticalEdge.First.x;
+                    int y = horizontalEdge.First.y;
 
                     bool intersects = x > xMin && x < xMax && y > yMin && y < yMax;
 
@@ -69,10 +69,10 @@ namespace adventofcode_2025
         {
             public static readonly Vector2 Invalid = new Vector2(-1, -1);
 
-            public long x;
-            public long y;
+            public int x;
+            public int y;
 
-            public Vector2(long x, long y)
+            public Vector2(int x, int y)
             {
                 this.x = x;
                 this.y = y;
@@ -94,9 +94,9 @@ namespace adventofcode_2025
             {
                 string x;
                 string y;
-                if (this.x == long.MaxValue) x = "max";
+                if (this.x == int.MaxValue) x = "max";
                 else x = this.x.ToString();
-                if (this.y == long.MaxValue) y = "max";
+                if (this.y == int.MaxValue) y = "max";
                 else y = this.y.ToString();
                 return $"({x},{y})";
             }
@@ -105,8 +105,8 @@ namespace adventofcode_2025
             {
                 string[] parts = str.Split(',');
 
-                long x = long.Parse(parts[0]);
-                long y = long.Parse(parts[1]);
+                int x = int.Parse(parts[0]);
+                int y = int.Parse(parts[1]);
 
                 return new Vector2(x, y);
             }
@@ -117,6 +117,8 @@ namespace adventofcode_2025
 
         long biggestArea = 0;
         public Vector2[] corners;
+
+        public List<(Vector2, bool)> invalidPoints = new ();
 
         public IEnumerator<Edge[]> Execute(string input)
         {
@@ -132,8 +134,8 @@ namespace adventofcode_2025
             {
                 edges[i] = new Edge(corners[i], corners[(i + 1) % l]);
 
-                totalWidth = Math.Max((int)corners[i].x + 3, totalWidth);
-                totalHeight = Math.Max((int)corners[i].y + 2, totalHeight);
+                totalWidth = Math.Max(corners[i].x + 3, totalWidth);
+                totalHeight = Math.Max(corners[i].y + 2, totalHeight);
             }
 
 
@@ -142,31 +144,26 @@ namespace adventofcode_2025
                 Vector2 first = corners[i];
                 for (int ii = i + 1; ii < l; ii++)
                 {
+                    invalidPoints.Clear();
+
                     Vector2 second = corners[ii];
 
-                    long xMin = Math.Min(first.x, second.x);
-                    long xMax = Math.Max(first.x, second.x);
+                    var third = new Vector2(first.x, second.y);
+                    var fourth = new Vector2(second.x, first.y);
 
-                    long yMin = Math.Min(first.y, second.y);
-                    long yMax = Math.Max(first.y, second.y);
-
-                    Vector2 topLeft = new Vector2(xMin, yMin);
-                    Vector2 topRight = new Vector2(xMax, yMin);
-                    Vector2 bottomLeft = new Vector2(xMin, yMax);
-                    Vector2 bottomRight = new Vector2(xMax, yMax);
-                    
                     Edge[] rectEdges =
                     {
-                            new (topLeft, topRight),
-                            new (topRight, bottomRight),
-                            new (bottomRight, bottomLeft),
-                            new (bottomLeft, topLeft),
+                            new (first, third),
+                            new (first, fourth),
+                            new (second, third),
+                            new (second, fourth),
                         };
-
-                    if (TileInPolygon(edges, topLeft) &&
-                        TileInPolygon(edges, topRight) &&
-                        TileInPolygon(edges, bottomLeft) &&
-                        TileInPolygon(edges, bottomRight))
+                    bool thirdInPol = TileInPolygon(edges, third);
+                    bool fourthInPol = TileInPolygon(edges, fourth);
+                    if (!thirdInPol) invalidPoints.Add((third, false));
+                    if (!fourthInPol) invalidPoints.Add((fourth, false));
+                    if (thirdInPol &&
+                        fourthInPol)
                     {
 
                         bool valid = true;
@@ -194,6 +191,7 @@ namespace adventofcode_2025
 
                                 if (!TileInPolygon(edges, pointsToCheck[0]) || !TileInPolygon(edges, pointsToCheck[1]))
                                 {
+                                    invalidPoints.Add((intersectionPoint, true));
                                     valid = false;
                                     break;
                                 }
@@ -204,7 +202,9 @@ namespace adventofcode_2025
 
                         if (valid)
                         {
-                            long area = (xMax - xMin + 1) * (yMax - yMin + 1);
+                            long width = Math.Abs(first.x - second.x) + 1;
+                            long height = Math.Abs(first.y - second.y) + 1;
+                            long area = width * height;
                             biggestArea = Math.Max(area, biggestArea);
                         }
                     }
@@ -221,11 +221,6 @@ namespace adventofcode_2025
 
         private bool TileInPolygon(Edge[] edges, Vector2 pos)
         {
-            foreach (var item in edges)
-            {
-                if (item.IsOnEdge(pos)) return true;
-            }
-
             return TileInPolygonWinding(edges, pos);
         }
 
@@ -249,6 +244,8 @@ namespace adventofcode_2025
             int turningNumber = 0;
             foreach (var item in edges)
             {
+                if (item.IsOnEdge(pos)) return true;
+
                 var currentPoint = item.First;
                 var nextPoint = item.Second;
 
