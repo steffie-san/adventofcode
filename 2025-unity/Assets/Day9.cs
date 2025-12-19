@@ -119,6 +119,8 @@ namespace adventofcode_2025
         public Vector2[] corners;
 
         public List<(Vector2, bool)> invalidPoints = new ();
+        public List<int> badRectEdges = new();
+        public List<int> badPolyEdges = new();
 
         public IEnumerator<Edge[]> Execute(string input)
         {
@@ -145,32 +147,46 @@ namespace adventofcode_2025
                 for (int ii = i + 1; ii < l; ii++)
                 {
                     invalidPoints.Clear();
+                    badRectEdges.Clear();
+                    badPolyEdges.Clear();
 
-                    Vector2 second = corners[ii];
-
-                    var third = new Vector2(first.x, second.y);
-                    var fourth = new Vector2(second.x, first.y);
+                    Vector2 third = corners[ii];
+                    Vector2 second;
+                    Vector2 fourth;
+                    if (first.x < third.x == first.y < third.y)
+                    {
+                        second = new Vector2(first.x, third.y);
+                        fourth = new Vector2(third.x, first.y);
+                    }
+                    else
+                    {
+                        second = new Vector2(third.x, first.y);
+                        fourth  = new Vector2(first.x, third.y);
+                    }
 
                     Edge[] rectEdges =
                     {
-                            new (first, third),
-                            new (first, fourth),
+                            new (first, second),
                             new (second, third),
-                            new (second, fourth),
+                            new (third, fourth),
+                            new (fourth, first),
                         };
-                    bool thirdInPol = TileInPolygon(edges, third);
+                    bool secondInPol = TileInPolygon(edges, second);
                     bool fourthInPol = TileInPolygon(edges, fourth);
-                    if (!thirdInPol) invalidPoints.Add((third, false));
+                    if (!secondInPol) invalidPoints.Add((second, false));
                     if (!fourthInPol) invalidPoints.Add((fourth, false));
-                    if (thirdInPol &&
+                    if (secondInPol &&
                         fourthInPol)
                     {
 
                         bool valid = true;
-                        foreach (Edge rectEdgeIt in rectEdges)
+                        for (int iii = 0; iii < rectEdges.Length; iii++)
                         {
-                            foreach (Edge item in edges)
+                            for (int iiii = 0; iiii < edges.Length; iiii++)
                             {
+                                Edge item = edges[iiii];
+                                Edge rectEdgeIt = rectEdges[iii];
+
                                 Vector2 intersectionPoint = rectEdgeIt.GetIntersectionPoint(item);
 
                                 if (intersectionPoint == Vector2.Invalid) continue;
@@ -192,6 +208,8 @@ namespace adventofcode_2025
                                 if (!TileInPolygon(edges, pointsToCheck[0]) || !TileInPolygon(edges, pointsToCheck[1]))
                                 {
                                     invalidPoints.Add((intersectionPoint, true));
+                                    badPolyEdges.Add(iiii);
+                                    badRectEdges.Add(iii);
                                     valid = false;
                                     break;
                                 }
@@ -202,8 +220,8 @@ namespace adventofcode_2025
 
                         if (valid)
                         {
-                            long width = Math.Abs(first.x - second.x) + 1;
-                            long height = Math.Abs(first.y - second.y) + 1;
+                            long width = Math.Abs(first.x - third.x) + 1;
+                            long height = Math.Abs(first.y - third.y) + 1;
                             long area = width * height;
                             biggestArea = Math.Max(area, biggestArea);
                         }

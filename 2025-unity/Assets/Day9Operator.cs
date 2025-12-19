@@ -2,6 +2,7 @@ using adventofcode_2025;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 public class Day9Operator : MonoBehaviour
 {
@@ -17,7 +18,8 @@ public class Day9Operator : MonoBehaviour
     public float lineThickness = 1f;
     public float markerScale = 1f;
 
-    List<LineRenderer> edges = new List<LineRenderer>();
+    List<LineRenderer> edges = new();
+    List<SpriteRenderer> vertices = new();
     List<SpriteRenderer> badMarkers = new();
 
 
@@ -52,6 +54,7 @@ public class Day9Operator : MonoBehaviour
             if (current.y > max.y) max.y = current.y;
 
             edges.Add(Instantiate(edgePrefab));
+            vertices.Add(Instantiate(vertexPrefab));
         }
 
         rectEdges = new LineRenderer[4];
@@ -61,47 +64,51 @@ public class Day9Operator : MonoBehaviour
 
 
 
-        int count = 0;
-        int stepCount = 1000;
-        for (int y = min.y; y < max.y; y += stepCount)
-        {
-            for (int x = min.x; x < max.x; x += stepCount)
-            {
-                var vector = new Day9.Vector2(x, y);
-                var pixel = Instantiate(vertexPrefab);
-                pixel.transform.position = ToWorldSpace(vector);
-                pixel.transform.localScale = Vector3.one * markerScale;
-                pixel.color = day.TileInPolygon(allEdges, vector) ? Color.green : Color.red;
-
-                if (count > 10)
-                {
-                    yield return null;
-                    count = 0;
-                }
-                else count++;
-            }
-        }
-
-        //do
+        //int count = 0;
+        //int stepCount = 1000;
+        //for (int y = min.y; y < max.y; y += stepCount)
         //{
-        //    Day9.Edge[] currentEdges = iterator.Current;
-        //    for (int i = 0; i < rectEdges.Length; i++)
+        //    for (int x = min.x; x < max.x; x += stepCount)
         //    {
-        //        var c1 = currentEdges[i].First;
-        //        var c2 = currentEdges[i].Second;
-        //        rectEdges[i].SetPosition(0, ToWorldSpace(c1));
-        //        rectEdges[i].SetPosition(1, ToWorldSpace(c2));
+        //        var vector = new Day9.Vector2(x, y);
+        //        var pixel = Instantiate(vertexPrefab);
+        //        pixel.transform.position = ToWorldSpace(vector);
+        //        pixel.transform.localScale = Vector3.one * markerScale;
+        //        bool inPolygon = day.TileInPolygon(allEdges, vector);
+        //        if (inPolygon) Debug.Log("In polygon!");
+        //        pixel.color = inPolygon ? Color.green : Color.red;
 
+        //        if (count > 10)
+        //        {
+        //            yield return null;
+        //            count = 0;
+        //        }
+        //        else count++;
         //    }
-        //    UpdateBadMarkers(day.invalidPoints);
-        //    yield return new WaitForSeconds(updateTime);
         //}
-        //while (iterator.MoveNext());
-        //UpdateBadMarkers(new ());
+
+        do
+        {
+            Day9.Edge[] currentEdges = iterator.Current;
+            for (int i = 0; i < rectEdges.Length; i++)
+            {
+                var c1 = currentEdges[i].First;
+                var c2 = currentEdges[i].Second;
+                rectEdges[i].SetPosition(0, ToWorldSpace(c1));
+                rectEdges[i].SetPosition(1, ToWorldSpace(c2));
+                rectEdges[i].startColor = rectEdges[i].endColor = Color.green;
+
+            }
+            UpdateBadMarkers(day);
+            yield return new WaitForSeconds(updateTime);
+        }
+        while (iterator.MoveNext());
+        UpdateBadMarkers(new());
     }
 
-    void UpdateBadMarkers(List<(Day9.Vector2, bool)> badPoints)
+    void UpdateBadMarkers(Day9 day)
     {
+        List<(Day9.Vector2, bool)> badPoints = day.invalidPoints;
         for (int i = 0; i < badPoints.Count; i++)
         {
             SpriteRenderer instance;
@@ -124,6 +131,19 @@ public class Day9Operator : MonoBehaviour
         }
 
         for (int i = badPoints.Count; i < badMarkers.Count; i++) badMarkers[i].gameObject.SetActive(false);
+
+        for (int i = 0; i < day.badRectEdges.Count; i++)
+        {
+            var renderer = rectEdges[day.badRectEdges[i]];
+            renderer.startColor = renderer.endColor = Color.red;
+        }
+
+        for (int i = 0; i < edges.Count; i++)
+        {
+            bool bad = day.badPolyEdges.Contains(i);
+            LineRenderer renderer = edges[i];
+            renderer.startColor = renderer.endColor = bad ? Color.red : Color.green;
+        }
 
     }
 
@@ -153,6 +173,9 @@ public class Day9Operator : MonoBehaviour
             edges[i].SetPosition(0, v1);
             edges[i].SetPosition(1, v2);
             center += v1 + v2;
+
+            vertices[i].transform.position = v1;
+            vertices[i].transform.localScale = Vector3.one * scale;
         }
         center /= l * 2;
         center.z = -10;
