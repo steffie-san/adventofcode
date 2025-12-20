@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using static UnityEditor.Progress;
 using Debug = UnityEngine.Debug;
 
 public class Day9Operator : MonoBehaviour
@@ -17,12 +18,14 @@ public class Day9Operator : MonoBehaviour
 
     [Space]
     public bool executeAsFastAsPossible = false;
+    public bool playerControlled = false;
     public float updateTime = 0f;
 
     [Space]
     public float scale = 1f;
     public float lineThickness = 1f;
     public float markerScale = 1f;
+    public float vertexScale = 1f;
 
     [Space]
     public ulong currentArea;
@@ -37,14 +40,16 @@ public class Day9Operator : MonoBehaviour
     List<SpriteRenderer> badMarkers = new();
 
     SpriteRenderer mouseMarker;
+    SpriteRenderer projectedMarker;
 
 
     LineRenderer[] rectEdges;
-    Day9.Vector2[] winningCorners;
+    //Day9.Vector2[] winningCorners;
 
     Day9 day = new Day9();
     float lastLineThickness = -1;
     float lastScale = -1;
+    float lastVertexScale = -1;
 
     private IEnumerator Start()
     {
@@ -61,11 +66,11 @@ public class Day9Operator : MonoBehaviour
         IEnumerator<Day9.Edge[]> iterator = day.Execute(input.text);
         iterator.MoveNext();
 
-        var first = day.corners[217];
-        var third = day.corners[248];
-        var second = new Day9.Vector2(third.x, first.y);
-        var fourth = new Day9.Vector2(first.x, third.y);
-        winningCorners = new Day9.Vector2[] { first, second, third, fourth };
+        //var first = day.corners[217];
+        //var third = day.corners[248];
+        //var second = new Day9.Vector2(third.x, first.y);
+        //var fourth = new Day9.Vector2(first.x, third.y);
+        //winningCorners = new Day9.Vector2[] { first, second, third, fourth };
 
         Day9.Vector2 min = new Day9.Vector2(int.MaxValue, int.MaxValue);
         Day9.Vector2 max = new Day9.Vector2(0, 0);
@@ -86,7 +91,9 @@ public class Day9Operator : MonoBehaviour
             var edgeInstance = Instantiate(edgePrefab, polyEdgeParent);
             edgeInstance.name = "Edge " + new Day9.Edge(current, next).ToString();
             edges.Add(edgeInstance);
-            vertices.Add(Instantiate(vertexPrefab, polyVertexParent));
+            var vertexInstance = Instantiate(vertexPrefab, polyVertexParent);
+            vertexInstance.name = "Vertex " + current;
+            vertices.Add(vertexInstance);
         }
 
         rectEdges = new LineRenderer[4];
@@ -94,18 +101,23 @@ public class Day9Operator : MonoBehaviour
 
         OnScaleUpdated();
 
-        badMarkers.Add(Instantiate(vertexPrefab, vertexMarkerParent));
-        badMarkers.Add(Instantiate(vertexPrefab, vertexMarkerParent));
-        badMarkers.Add(Instantiate(vertexPrefab, vertexMarkerParent));
-        badMarkers.Add(Instantiate(vertexPrefab, vertexMarkerParent));
+        //badMarkers.Add(Instantiate(vertexPrefab, vertexMarkerParent));
+        //badMarkers.Add(Instantiate(vertexPrefab, vertexMarkerParent));
+        //badMarkers.Add(Instantiate(vertexPrefab, vertexMarkerParent));
+        //badMarkers.Add(Instantiate(vertexPrefab, vertexMarkerParent));
 
-        //mouseMarker = Instantiate(vertexPrefab);
-        //mouseMarker.name = "mouse marker";
+        mouseMarker = Instantiate(vertexPrefab);
+        mouseMarker.name = "mouse marker";
+
+        projectedMarker = Instantiate(vertexPrefab);
+        projectedMarker.name = "projected mouse marker";
+
+        rectEdgeParent.gameObject.SetActive(false);
 
         yield return null;
 
         //int count = 0;
-        //int stepCount = 1000;
+        //int stepCount = 1;
         //for (int y = min.y; y < max.y; y += stepCount)
         //{
         //    for (int x = min.x; x < max.x; x += stepCount)
@@ -138,7 +150,6 @@ public class Day9Operator : MonoBehaviour
                 rectEdges[i].startColor = rectEdges[i].endColor = Color.green;
 
             }
-            UpdateBadMarkers(day);
             if (executeAsFastAsPossible)
             {
                 if (stopwatch.ElapsedMilliseconds > 500f / 60) //Half a frame when running at 60 FPS
@@ -147,69 +158,16 @@ public class Day9Operator : MonoBehaviour
                     stopwatch.Restart();
                 }
             }
+            else if (playerControlled)
+            {
+                yield return null;
+                Debug.Break();
+            }
             else if (updateTime > 0) yield return new WaitForSeconds(updateTime);
             else yield return null;
 
         }
         while (iterator.MoveNext());
-        UpdateBadMarkers(new());
-    }
-
-    void UpdateBadMarkers(Day9 day)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            badMarkers[i].transform.position = ToWorldSpace(winningCorners[i]);
-            badMarkers[i].transform.localScale = Vector3.one * markerScale;
-            badMarkers[i].color = Color.cyan;
-        }
-
-        //List<(Day9.Vector2, bool)> badPoints = day.invalidPoints;
-        //for (int i = 0; i < badPoints.Count; i++)
-        //{
-        //    SpriteRenderer instance;
-        //    if (badMarkers.Count <= i)
-        //    {
-        //        instance = Instantiate(vertexPrefab, vertexMarkerParent);
-        //        instance.color = Color.red;
-        //        badMarkers.Add(instance);
-        //    }
-        //    else
-        //    {
-        //        instance = badMarkers[i];
-        //        instance.gameObject.SetActive(true);
-        //    }
-        //    var point = badPoints[i].Item1;
-        //    var isIntersection = badPoints[i].Item2;
-        //    instance.color = isIntersection ? Color.red : Color.cyan;
-        //    instance.transform.position = ToWorldSpace(point);
-        //    instance.transform.localScale = Vector3.one * markerScale;
-        //}
-
-        //for (int i = badPoints.Count; i < badMarkers.Count; i++) badMarkers[i].gameObject.SetActive(false);
-
-        //for (int i = 0; i < day.isEdgeWinding.Length; i++)
-        //{
-        //    Color color = Color.white;
-        //    if (day.isEdgeWinding[i] < 0) color = Color.red;
-        //    else if (day.isEdgeWinding[i] > 0) color = Color.green;
-        //    edges[i].startColor = edges[i].endColor = color;
-
-        //}
-
-        //for (int i = 0; i < day.badRectEdges.Count; i++)
-        //{
-        //    var renderer = rectEdges[day.badRectEdges[i]];
-        //    renderer.startColor = renderer.endColor = Color.red;
-        //}
-
-        //for (int i = 0; i < edges.Count; i++)
-        //{
-        //    bool bad = day.badPolyEdges.Contains(i);
-        //    LineRenderer renderer = edges[i];
-        //    renderer.startColor = renderer.endColor = bad ? Color.red : Color.white;
-        //}
-
     }
 
     private void Update()
@@ -217,27 +175,28 @@ public class Day9Operator : MonoBehaviour
         if (lineThickness < 0) lineThickness = 0;
         if (lineThickness != lastLineThickness)
         {
-            foreach (LineRenderer item in edges) item.widthMultiplier = lineThickness;
-            foreach (var item in rectEdges) item.widthMultiplier = lineThickness;
-            lastLineThickness = lineThickness;
+
         }
         if (scale < 0f) scale = 0f;
-        if (scale != lastScale) OnScaleUpdated();
+        if (scale != lastScale || vertexScale != lastVertexScale || lineThickness != lastLineThickness) OnScaleUpdated();
 
-
-        //if (Input.GetMouseButtonDown(0))
+        bool doPrint = Input.GetMouseButtonDown(0);
+        //if ()
         {
-            //Vector2 pos = Input.mousePosition;
-            ////print(pos);
-            //pos = Camera.main.ScreenToWorldPoint(pos);
-            //mouseMarker.transform.position = pos;
-            ////print(pos);
-            //pos /= scale;
-            ////print(pos);
-            //var tile = new Day9.Vector2(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
-            ////print(tile);
-            //mouseMarker.color = day.TileInPolygon(day.corners, tile) ? Color.green : Color.red;
-            //mouseMarker.transform.localScale = Vector3.one * lineThickness * 2;
+            Vector2 pos = Input.mousePosition;
+            if (doPrint) print(pos);
+            pos = Camera.main.ScreenToWorldPoint(pos);
+            mouseMarker.transform.position = pos;
+            if (doPrint) print(pos);
+            pos /= scale;
+            if (doPrint) print(pos);
+            var tile = new Day9.Vector2(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
+            if (doPrint) print(tile);
+            mouseMarker.transform.localScale = Vector3.one * vertexScale * 0.5f;
+
+            projectedMarker.transform.position = ToWorldSpace(tile);
+            projectedMarker.transform.localScale = Vector3.one * vertexScale;
+            projectedMarker.color = day.TileInPolygon(day.corners, tile, doPrint) ? Color.green : Color.red;
         }
     }
 
@@ -255,12 +214,17 @@ public class Day9Operator : MonoBehaviour
             center += v1 + v2;
 
             vertices[i].transform.position = v1;
-            vertices[i].transform.localScale = Vector3.one * scale;
+            vertices[i].transform.localScale = Vector3.one * vertexScale;
+            edges[i].widthMultiplier = lineThickness;
         }
         center /= l * 2;
         center.z = -10;
         Camera.main.transform.position = center;
         lastScale = scale;
+        lastVertexScale = vertexScale;
+
+        foreach (var item in rectEdges) item.widthMultiplier = lineThickness;
+        lastLineThickness = lineThickness;
     }
 
     void SetEdgePositions(LineRenderer edgeRenderer, Day9.Edge edge)

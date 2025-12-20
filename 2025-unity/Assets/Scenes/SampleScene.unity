@@ -240,16 +240,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dc87cd852e5ced409b0ae33a6f306b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  useExample: 0
+  useExample: 1
   inputPath: day 9
   exampleInputPath: day 9.example
   edgePrefab: {fileID: 3872061078469950976, guid: 5caa1dd3267343a42a14cd53a8e8568f, type: 3}
   vertexPrefab: {fileID: 1531186777962956919, guid: 48a4c16aff11ac149aeeeeb7adf224b9, type: 3}
   executeAsFastAsPossible: 1
+  playerControlled: 0
   updateTime: 0.5
   scale: 0.0001
   lineThickness: 0.02
   markerScale: 0.05
+  vertexScale: 0.01
   currentArea: 0
 --- !u!4 &591968200
 Transform:
