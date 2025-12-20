@@ -12,6 +12,12 @@
     <None Update="input\day 1.input">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="input\day 10.example.input">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="input\day 10.input">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="input\day 2.example.input">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
