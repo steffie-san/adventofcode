@@ -245,10 +245,12 @@ MonoBehaviour:
   exampleInputPath: day 9.example
   edgePrefab: {fileID: 3872061078469950976, guid: 5caa1dd3267343a42a14cd53a8e8568f, type: 3}
   vertexPrefab: {fileID: 1531186777962956919, guid: 48a4c16aff11ac149aeeeeb7adf224b9, type: 3}
+  executeAsFastAsPossible: 1
+  updateTime: 0.5
   scale: 0.0001
-  updateTime: 0.1
   lineThickness: 0.02
-  markerScale: 0.012
+  markerScale: 0.05
+  currentArea: 0
 --- !u!4 &591968200
 Transform:
   m_ObjectHideFlags: 0

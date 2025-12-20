@@ -1,9 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Debug = UnityEngine.Debug;
 
 namespace adventofcode_2025
 {
+    public enum Quadrant
+    {
+        INVALID,
+        UPPER_RIGHT,
+        LOWER_RIGHT,
+        LOWER_LEFT,
+        UPPER_LEFT
+    }
     public class Day9
     {
         public struct Edge
@@ -115,12 +124,17 @@ namespace adventofcode_2025
             public static bool operator !=(Vector2 a, Vector2 b) => !(a == b);
         }
 
-        long biggestArea = 0;
+        public int firstIndex = 0;
+        public int secondIndex = 0;
+        public ulong biggestArea = 0;
+        public ulong currentArea = 0;
         public Vector2[] corners;
 
-        public List<(Vector2, bool)> invalidPoints = new ();
-        public List<int> badRectEdges = new();
-        public List<int> badPolyEdges = new();
+        //public List<(Vector2, bool)> invalidPoints = new ();
+        //public List<int> badRectEdges = new();
+        //public List<int> badPolyEdges = new();
+        //public int[] isEdgeWinding;
+
 
         public IEnumerator<Edge[]> Execute(string input)
         {
@@ -130,6 +144,7 @@ namespace adventofcode_2025
 
 
             Edge[] edges = new Edge[l];
+            //isEdgeWinding = new int[l];
             int totalWidth = 0;
             int totalHeight = 0;
             for (int i = 0; i < l; i++)
@@ -143,12 +158,22 @@ namespace adventofcode_2025
 
             for (int i = 0; i < l - 1; i++)
             {
+                firstIndex = i;
+                //if (i == 217)
+                //{
+                //    UnityEngine.Debug.Break();
+                //}
                 Vector2 first = corners[i];
                 for (int ii = i + 1; ii < l; ii++)
                 {
-                    invalidPoints.Clear();
-                    badRectEdges.Clear();
-                    badPolyEdges.Clear();
+                    //if (ii == 249)
+                    //{
+                    //    UnityEngine.Debug.Break();
+                    //}
+                    secondIndex = ii;
+                    //invalidPoints.Clear();
+                    //badRectEdges.Clear();
+                    //badPolyEdges.Clear();
 
                     Vector2 third = corners[ii];
                     Vector2 second;
@@ -161,8 +186,12 @@ namespace adventofcode_2025
                     else
                     {
                         second = new Vector2(third.x, first.y);
-                        fourth  = new Vector2(first.x, third.y);
+                        fourth = new Vector2(first.x, third.y);
                     }
+
+                    ulong width = (ulong)Math.Abs(first.x - third.x) + 1;
+                    ulong height = (ulong)Math.Abs(first.y - third.y) + 1;
+                    currentArea = width * height;
 
                     Edge[] rectEdges =
                     {
@@ -171,10 +200,17 @@ namespace adventofcode_2025
                             new (third, fourth),
                             new (fourth, first),
                         };
-                    bool secondInPol = TileInPolygon(edges, second);
-                    bool fourthInPol = TileInPolygon(edges, fourth);
-                    if (!secondInPol) invalidPoints.Add((second, false));
-                    if (!fourthInPol) invalidPoints.Add((fourth, false));
+                    bool secondInPol = TileInPolygon(corners, second, i == 217 && ii == 248);
+                    bool fourthInPol = TileInPolygon(corners, fourth);
+                    if (!secondInPol)
+                    {
+                        //invalidPoints.Add((second, false));
+                        //UnityEngine.Debug.Break();
+                    }
+                    if (!fourthInPol)
+                    {
+                        //invalidPoints.Add((fourth, false));
+                    }
                     if (secondInPol &&
                         fourthInPol)
                     {
@@ -191,8 +227,8 @@ namespace adventofcode_2025
 
                                 if (intersectionPoint == Vector2.Invalid) continue;
 
-                                var x = intersectionPoint.x;
-                                var y = intersectionPoint.y;
+                                int x = intersectionPoint.x;
+                                int y = intersectionPoint.y;
                                 Vector2[] pointsToCheck = new Vector2[2];
                                 if (rectEdgeIt.IsVertical)
                                 {
@@ -205,25 +241,23 @@ namespace adventofcode_2025
                                     pointsToCheck[1] = new Vector2(x + 1, y);
                                 }
 
-                                if (!TileInPolygon(edges, pointsToCheck[0]) || !TileInPolygon(edges, pointsToCheck[1]))
+                                if (!TileInPolygon(corners, pointsToCheck[0]) || !TileInPolygon(corners, pointsToCheck[1]))
                                 {
-                                    invalidPoints.Add((intersectionPoint, true));
-                                    badPolyEdges.Add(iiii);
-                                    badRectEdges.Add(iii);
+                                    //invalidPoints.Add((intersectionPoint, true));
+                                    //badPolyEdges.Add(iiii);
+                                    //badRectEdges.Add(iii);
                                     valid = false;
                                     break;
                                 }
                             }
                             if (!valid) break;
                         }
-
+                        //valid &= secondInPol && fourthInPol;
 
                         if (valid)
                         {
-                            long width = Math.Abs(first.x - third.x) + 1;
-                            long height = Math.Abs(first.y - third.y) + 1;
-                            long area = width * height;
-                            biggestArea = Math.Max(area, biggestArea);
+                            biggestArea = Math.Max(currentArea, biggestArea);
+                            Log($"size: {currentArea}, max: {biggestArea}");
                         }
                     }
 
@@ -233,13 +267,15 @@ namespace adventofcode_2025
             }
 
             //string star2 = biggestArea.ToString();
+            Log(biggestArea.ToString());
             yield break;
             //1289423295 is too low
+            //1562459680 is the right answer from vertices 217, 248
         }
 
-        public bool TileInPolygon(Edge[] edges, Vector2 pos)
+        public bool TileInPolygon(Vector2[] vertices, Vector2 pos, bool debug = false)
         {
-            return TileInPolygonWinding(edges, pos);
+            return TileInPolygonWinding(vertices, pos, debug);
         }
 
         private bool TileInPolygonRaycast(Edge[] edges, Vector2 pos)
@@ -257,52 +293,83 @@ namespace adventofcode_2025
             return intersectCount % 2 == 1;
         }
 
-        private bool TileInPolygonWinding(Edge[] edges, Vector2 pos)
+        private bool TileInPolygonWinding(Vector2[] vertices, Vector2 pos, bool debug)
         {
+            //Verify winding goes the correct direction. Terminology changes based on if +y is up or down, but algorithm shouldn't
+
+            if (debug) Log("debugging tileinpolygonwinding for pos" + pos);
             int turningNumber = 0;
-            foreach (var item in edges)
+
+            int len = vertices.Length;
+            Quadrant precedingQuadrant = Quadrant.INVALID;
+
+            for (int i = 0; precedingQuadrant == Quadrant.INVALID; i--)
             {
-                if (item.IsOnEdge(pos)) return true;
+                precedingQuadrant = GetRelativeQuadrant(pos, vertices[(i + len) % len]); //Add l here 
+            }
 
-                var currentPoint = item.First;
-                var nextPoint = item.Second;
+            for (int i = 1; i < len; i++)
+            {
+                Quadrant nextQuadrant = Quadrant.INVALID;
+                for (; nextQuadrant == Quadrant.INVALID; i++)
+                {
+                    nextQuadrant = GetRelativeQuadrant(pos, vertices[i % len]);
+                }
+                i--;
 
-                //Horizontal, left to right
-                if (currentPoint.x <= pos.x && nextPoint.x > pos.x)
-                {
-                    if (currentPoint.y < pos.y) turningNumber++;
-                    else if (currentPoint.y > pos.y) turningNumber--;
-                    else throw new Exception("This shouldn't happen");
-                }
-                //Horizontal, right to left
-                else if (currentPoint.x >= pos.x && nextPoint.x < pos.x)
-                {
-                    if (currentPoint.y > pos.y) turningNumber++;
-                    else if (currentPoint.y < pos.y) turningNumber--;
-                    else throw new Exception("This shouldn't happen");
-                }
-                //Vertical, up to down
-                else if (currentPoint.y <= pos.y && nextPoint.y > pos.y)
-                {
-                    if (currentPoint.x > pos.x) turningNumber++;
-                    else if (currentPoint.x < pos.x) turningNumber--;
-                    else throw new Exception("This shouldn't happen");
-                }
-                //Vertical, down to up
-                else if (currentPoint.y >= pos.y && nextPoint.y < pos.y)
-                {
-                    if (currentPoint.x > pos.x) turningNumber--;
-                    else if (currentPoint.x < pos.x) turningNumber++;
-                    else throw new Exception("This shouldn't happen");
-                }
+
+                int windingValue;
+                if (precedingQuadrant == Quadrant.UPPER_RIGHT && nextQuadrant == Quadrant.UPPER_LEFT) windingValue = -1;
+                else if (precedingQuadrant == Quadrant.UPPER_LEFT && nextQuadrant == Quadrant.UPPER_RIGHT) windingValue = 1;
+                else windingValue = nextQuadrant - precedingQuadrant;
+
+                if (debug && windingValue != 0) Log($"Winding {windingValue} (from {precedingQuadrant} to {nextQuadrant})");
+                turningNumber += windingValue;
+                precedingQuadrant = nextQuadrant;
 
             }
-            return turningNumber >= 4;
+            bool inPolygon = turningNumber <= -4;
+            if (debug) Log($"Tile is in polygon: {inPolygon} (winding number: {turningNumber})");
+            return inPolygon;
         }
 
-        private void BuildRectangles(Edge[] edges)
+        Quadrant GetRelativeQuadrant(Vector2 pos, Vector2 inQuadrant)
         {
+            if (inQuadrant.x > pos.x)
+            {
+                if (inQuadrant.y > pos.y) return Quadrant.UPPER_RIGHT;
+                else if (inQuadrant.y < pos.y) return Quadrant.LOWER_RIGHT;
+            }
+            else if (inQuadrant.x < pos.x)
+            {
+                if (inQuadrant.y > pos.y) return Quadrant.UPPER_LEFT;
+                else if (inQuadrant.y < pos.y) return Quadrant.LOWER_LEFT;
+            }
+            return Quadrant.INVALID;
+            //throw new Exception($"Cannot get quadrant from {pos} to {inQuadrant}. Are they on a line?");
+        }
 
+        bool isOnLine(params Vector2[] vertices)
+        {
+            bool horizontally = true;
+            bool vertically = true;
+            for (int i = 1; i < vertices.Length; i++)
+            {
+                if (!horizontally && !vertically) return false;
+
+                if (vertices[0].x != vertices[i].x) horizontally = false;
+                if (vertices[0].y != vertices[i].y) vertically = false;
+            }
+            return horizontally || vertically;
+        }
+
+        void Log(string msg)
+        {
+#if UNITY_EDITOR
+            Debug.Log(msg);
+#else
+            Console.WriteLine(msg);
+#endif
         }
     }
 }
