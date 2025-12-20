@@ -260,20 +260,18 @@ namespace adventofcode_2025
             int len = vertices.Length;
             Quadrant precedingQuadrant = Quadrant.INVALID;
 
-            for (int i = 0; precedingQuadrant == Quadrant.INVALID; i--)
+            for (int i = len - 1; precedingQuadrant == Quadrant.INVALID; i--)
             {
                 precedingQuadrant = GetRelativeQuadrant(pos, vertices[(i + len) % len]); //Add l here 
             }
-
-            for (int i = 1; i < len; i++)
+            Quadrant nextQuadrant = Quadrant.INVALID;
+            for (int i = 0; i < len; i++)
             {
-                Quadrant nextQuadrant = Quadrant.INVALID;
-                for (; nextQuadrant == Quadrant.INVALID; i++)
-                {
-                    nextQuadrant = GetRelativeQuadrant(pos, vertices[i % len]);
-                }
-                i--;
+                Edge edge = new Edge(vertices[i], vertices[(i + 1) % len]);
+                if (edge.IsOnEdge(pos)) return true;
 
+                nextQuadrant = GetRelativeQuadrant(pos, vertices[i]);
+                if (nextQuadrant == Quadrant.INVALID) continue;
 
                 int windingValue;
                 if (precedingQuadrant == Quadrant.UPPER_RIGHT && nextQuadrant == Quadrant.UPPER_LEFT) windingValue = -1;
