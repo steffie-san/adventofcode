@@ -4,69 +4,31 @@ namespace adventofcode_2025
 {
     internal class Day9 : IDay
     {
-        struct Edge
+        private enum Quadrant
+        {
+            INVALID,
+            UPPER_RIGHT,
+            LOWER_RIGHT,
+            LOWER_LEFT,
+            UPPER_LEFT
+        }
+        public struct Edge
         {
             public Vector2 First { get; }
             public Vector2 Second { get; }
 
             public bool IsVertical => First.x == Second.x && First.y != Second.y;
 
-            public long XMax => Math.Max(First.x, Second.x);
-            public long XMin => Math.Min(First.x, Second.x);
-            public long YMax => Math.Max(First.y, Second.y);
-            public long YMin => Math.Min(First.y, Second.y);
+            public int XMax => Math.Max(First.x, Second.x);
+            public int XMin => Math.Min(First.x, Second.x);
+            public int YMax => Math.Max(First.y, Second.y);
+            public int YMin => Math.Min(First.y, Second.y);
 
             public Edge(Vector2 first, Vector2 second)
             {
                 this.First = first;
                 this.Second = second;
             }
-
-            //public Vector2? GetIntersectionPoint(Edge edge)
-            //{
-            //    long x, y;
-            //    Vector2? result = null;
-            //    if (IsVertical != edge.IsVertical)
-            //    {
-            //        if (IsVertical)
-            //        {
-            //            y = edge.First.y;
-            //            x = First.x;
-            //        }
-            //        else
-            //        {
-            //            y = First.y;
-            //            x = edge.First.x;
-            //        }
-            //        result = new(x, y);
-            //    }
-            //    else
-            //    {
-            //        //If they overlap, the "intersection" is the point closest to this.First
-            //        if (IsVertical)
-            //        {
-            //            if (First.x == edge.First.x)
-            //            {
-            //                x = First.x;
-            //                if (edge.YMin < YMin) y = YMin;
-            //                else y = edge.YMin;
-            //                result = new(x, y);
-            //            }
-            //        }
-            //        else
-            //        {
-            //            if (First.y == edge.First.y)
-            //            {
-            //                y = First.y;
-            //                if (edge.XMin < XMin) x = XMin;
-            //                else x = edge.XMin;
-            //                result = new(x, y);
-            //            }
-            //        }
-            //    }
-            //    if (result != null && IsOnEdge(result.Value) && edge.IsOnEdge(result.Value)) return result;
-            //    return null;
-            //}
 
             public bool IsOnEdge(Vector2 point)
             {
@@ -87,14 +49,14 @@ namespace adventofcode_2025
                     Edge horizontalEdge = isVertical ? other : this;
                     Edge verticalEdge = isVertical ? this : other;
 
-                    long xMin = horizontalEdge.XMin;
-                    long xMax = horizontalEdge.XMax;
+                    int xMin = horizontalEdge.XMin;
+                    int xMax = horizontalEdge.XMax;
 
-                    long yMin = verticalEdge.YMin;
-                    long yMax = verticalEdge.YMax;
+                    int yMin = verticalEdge.YMin;
+                    int yMax = verticalEdge.YMax;
 
-                    long x = verticalEdge.First.x;
-                    long y = horizontalEdge.First.y;
+                    int x = verticalEdge.First.x;
+                    int y = horizontalEdge.First.y;
 
                     bool intersects = x > xMin && x < xMax && y > yMin && y < yMax;
 
@@ -109,14 +71,14 @@ namespace adventofcode_2025
             }
         }
 
-        struct Vector2
+        public struct Vector2
         {
             public static readonly Vector2 Invalid = new Vector2(-1, -1);
 
-            public long x;
-            public long y;
+            public int x;
+            public int y;
 
-            public Vector2(long x, long y)
+            public Vector2(int x, int y)
             {
                 this.x = x;
                 this.y = y;
@@ -138,9 +100,9 @@ namespace adventofcode_2025
             {
                 string x;
                 string y;
-                if (this.x == long.MaxValue) x = "max";
+                if (this.x == int.MaxValue) x = "max";
                 else x = this.x.ToString();
-                if (this.y == long.MaxValue) y = "max";
+                if (this.y == int.MaxValue) y = "max";
                 else y = this.y.ToString();
                 return $"({x},{y})";
             }
@@ -149,8 +111,8 @@ namespace adventofcode_2025
             {
                 string[] parts = str.Split(',');
 
-                long x = long.Parse(parts[0]);
-                long y = long.Parse(parts[1]);
+                int x = int.Parse(parts[0]);
+                int y = int.Parse(parts[1]);
 
                 return new Vector2(x, y);
             }
@@ -165,7 +127,7 @@ namespace adventofcode_2025
 
             int l = corners.Length;
 
-            long biggestArea = 0;
+            ulong biggestArea = 0;
 
             for (int i = 0; i < l - 1; i++)
             {
@@ -174,9 +136,7 @@ namespace adventofcode_2025
                 {
                     Vector2 right = corners[ii];
 
-                    long area = (Math.Abs(right.x - left.x) + 1) * (Math.Abs(right.y - left.y) + 1);
-
-                    //Console.WriteLine($"Area of {left} and {right} is {area}");
+                    ulong area = ((ulong)Math.Abs(right.x - left.x) + 1) * ((ulong)Math.Abs(right.y - left.y) + 1);
 
                     if (area > biggestArea) biggestArea = area;
                 }
@@ -214,56 +174,59 @@ namespace adventofcode_2025
                 Vector2 first = corners[i];
                 for (int ii = i + 1; ii < l; ii++)
                 {
-                    Vector2 second = corners[ii];
-
-                    long xMin = Math.Min(first.x, second.x);
-                    long xMax = Math.Max(first.x, second.x);
-
-                    long yMin = Math.Min(first.y, second.y);
-                    long yMax = Math.Max(first.y, second.y);
-
-                    Vector2 topLeft = new Vector2(xMin, yMin);
-                    Vector2 topRight = new Vector2(xMax, yMin);
-                    Vector2 bottomLeft = new Vector2(xMin, yMax);
-                    Vector2 bottomRight = new Vector2(xMax, yMax);
-
-                    if (TileInPolygon(edges, topLeft) &&
-                        TileInPolygon(edges, topRight) &&
-                        TileInPolygon(edges, bottomLeft) &&
-                        TileInPolygon(edges, bottomRight))
+                    Vector2 third = corners[ii];
+                    Vector2 second;
+                    Vector2 fourth;
+                    if (first.x < third.x == first.y < third.y)
                     {
-                        Edge[] rectEdges =
-                        [
-                            new (topLeft, topRight),
-                            new (topRight, bottomRight),
-                            new (bottomRight, bottomLeft),
-                            new (bottomLeft, topLeft),
-                        ];
+                        second = new Vector2(first.x, third.y);
+                        fourth = new Vector2(third.x, first.y);
+                    }
+                    else
+                    {
+                        second = new Vector2(third.x, first.y);
+                        fourth = new Vector2(first.x, third.y);
+                    }
+
+                    Edge[] rectEdges =
+                    {
+                            new (first, second),
+                            new (second, third),
+                            new (third, fourth),
+                            new (fourth, first),
+                        };
+                    if (TileInPolygon(corners, second) &&
+                        TileInPolygon(corners, fourth))
+                    {
 
                         bool valid = true;
-                        foreach (Edge rectEdgeIt in rectEdges)
+                        for (int iii = 0; iii < rectEdges.Length; iii++)
                         {
-                            foreach (Edge item in edges)
+                            for (int iiii = 0; iiii < edges.Length; iiii++)
                             {
+                                Edge item = edges[iiii];
+                                Edge rectEdgeIt = rectEdges[iii];
+
                                 Vector2 intersectionPoint = rectEdgeIt.GetIntersectionPoint(item);
 
                                 if (intersectionPoint == Vector2.Invalid) continue;
 
-                                var x = intersectionPoint.x;
-                                var y = intersectionPoint.y;
-                                Vector2[] pointsToCheck = new Vector2[2];
+                                int x = intersectionPoint.x;
+                                int y = intersectionPoint.y;
+                                Vector2 point1;
+                                Vector2 point2;
                                 if (rectEdgeIt.IsVertical)
                                 {
-                                    pointsToCheck[0] = new Vector2(x, y - 1);
-                                    pointsToCheck[1] = new Vector2(x, y + 1);
+                                    point1 = new Vector2(x, y - 1);
+                                    point2 = new Vector2(x, y + 1);
                                 }
                                 else
                                 {
-                                    pointsToCheck[0] = new Vector2(x - 1, y);
-                                    pointsToCheck[1] = new Vector2(x + 1, y);
+                                    point1 = new Vector2(x - 1, y);
+                                    point2 = new Vector2(x + 1, y);
                                 }
 
-                                if (!TileInPolygon(edges, pointsToCheck[0]) || !TileInPolygon(edges, pointsToCheck[1]))
+                                if (!TileInPolygon(corners, point1) || !TileInPolygon(corners, point2))
                                 {
                                     valid = false;
                                     break;
@@ -272,90 +235,79 @@ namespace adventofcode_2025
                             if (!valid) break;
                         }
 
-
                         if (valid)
                         {
-                            long area = (xMax - xMin + 1) * (yMax - yMin + 1);
-                            biggestArea = Math.Max(area, biggestArea);
+                            ulong width = (ulong)Math.Abs(first.x - third.x) + 1;
+                            ulong height = (ulong)Math.Abs(first.y - third.y) + 1;
+                            var currentArea = width * height;
+                            biggestArea = Math.Max(currentArea, biggestArea);
+                            //Log($"size: {currentArea}, max: {biggestArea}");
                         }
                     }
                 }
-                //Console.WriteLine($"{i/(double)(l-1) / 100}%....");
             }
 
             star2 = biggestArea.ToString();
-            //1289423295 is too low
         }
 
-        private bool TileInPolygon(Edge[] edges, Vector2 pos)
+        private bool TileInPolygon(Vector2[] vertices, Vector2 pos, bool debug = false)
         {
-            foreach (var item in edges)
-            {
-                if (item.IsOnEdge(pos)) return true;
-            }
+            //Verify winding goes the correct direction. Terminology changes based on if +y is up or down, but algorithm shouldn't
 
-            return TileInPolygonWinding(edges, pos);
-        }
-
-        private bool TileInPolygonRaycast(Edge[] edges, Vector2 pos)
-        {
-            //Assuming all edges are in positive y space
-
-            Edge testEdge = new Edge(pos, new Vector2(pos.x, -1));
-            int intersectCount = 0;
-            foreach (Edge item in edges)
-            {
-                if (item.First == pos) return true;
-                else if (item.IsOnEdge(pos)) return true;
-                else if (testEdge.Intersects(item)) intersectCount++;
-            }
-            return intersectCount % 2 == 1;
-        }
-
-        private bool TileInPolygonWinding(Edge[] edges, Vector2 pos)
-        {
+            if (debug) Log("debugging tileinpolygonwinding for pos" + pos);
             int turningNumber = 0;
-            foreach (var item in edges)
-            {
-                var currentPoint = item.First;
-                var nextPoint = item.Second;
 
-                //Horizontal, left to right
-                if (currentPoint.x <= pos.x && nextPoint.x > pos.x)
+            int len = vertices.Length;
+            Quadrant precedingQuadrant = Quadrant.INVALID;
+
+            for (int i = 0; precedingQuadrant == Quadrant.INVALID; i--)
+            {
+                precedingQuadrant = GetRelativeQuadrant(pos, vertices[(i + len) % len]); //Add l here 
+            }
+
+            for (int i = 1; i < len; i++)
+            {
+                Quadrant nextQuadrant = Quadrant.INVALID;
+                for (; nextQuadrant == Quadrant.INVALID; i++)
                 {
-                    if (currentPoint.y < pos.y) turningNumber++;
-                    else if (currentPoint.y > pos.y) turningNumber--;
-                    else throw new Exception("This shouldn't happen");
+                    nextQuadrant = GetRelativeQuadrant(pos, vertices[i % len]);
                 }
-                //Horizontal, right to left
-                else if (currentPoint.x >= pos.x && nextPoint.x < pos.x)
-                {
-                    if (currentPoint.y > pos.y) turningNumber++;
-                    else if (currentPoint.y < pos.y) turningNumber--;
-                    else throw new Exception("This shouldn't happen");
-                }
-                //Vertical, up to down
-                else if (currentPoint.y <= pos.y && nextPoint.y > pos.y)
-                {
-                    if (currentPoint.x > pos.x) turningNumber++;
-                    else if (currentPoint.x < pos.x) turningNumber--;
-                    else throw new Exception("This shouldn't happen");
-                }
-                //Vertical, down to up
-                else if (currentPoint.y >= pos.y && nextPoint.y < pos.y)
-                {
-                    if (currentPoint.x > pos.x) turningNumber--;
-                    else if (currentPoint.x < pos.x) turningNumber++;
-                    else throw new Exception("This shouldn't happen");
-                }
+                i--;
+
+
+                int windingValue;
+                if (precedingQuadrant == Quadrant.UPPER_RIGHT && nextQuadrant == Quadrant.UPPER_LEFT) windingValue = -1;
+                else if (precedingQuadrant == Quadrant.UPPER_LEFT && nextQuadrant == Quadrant.UPPER_RIGHT) windingValue = 1;
+                else windingValue = nextQuadrant - precedingQuadrant;
+
+                if (debug && windingValue != 0) Log($"Winding {windingValue} (from {precedingQuadrant} to {nextQuadrant})");
+                turningNumber += windingValue;
+                precedingQuadrant = nextQuadrant;
 
             }
-            return turningNumber >= 4;
+            bool inPolygon = turningNumber <= -4;
+            if (debug) Log($"Tile is in polygon: {inPolygon} (winding number: {turningNumber})");
+            return inPolygon;
         }
 
-        private void BuildRectangles(Edge[] edges)
+        Quadrant GetRelativeQuadrant(Vector2 pos, Vector2 inQuadrant)
         {
+            if (inQuadrant.x > pos.x)
+            {
+                if (inQuadrant.y > pos.y) return Quadrant.UPPER_RIGHT;
+                else if (inQuadrant.y < pos.y) return Quadrant.LOWER_RIGHT;
+            }
+            else if (inQuadrant.x < pos.x)
+            {
+                if (inQuadrant.y > pos.y) return Quadrant.UPPER_LEFT;
+                else if (inQuadrant.y < pos.y) return Quadrant.LOWER_LEFT;
+            }
+            return Quadrant.INVALID;
+        }
 
+        void Log(string msg)
+        {
+            Console.WriteLine(msg);
         }
     }
 }
