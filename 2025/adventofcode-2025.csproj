@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="input\day 1.input">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
